@@ -49,9 +49,9 @@ struct Edge
 
 struct Vertex
 {
-	Vertex(string name) : Name(std::move(name)) { }
+	Vertex(int idx) : Idx(idx) { }
 
-	string Name;
+	int Idx;
 	vector<shared_ptr<Edge>> OutgoingEdges;
 	vector<shared_ptr<Edge>> IngoingEdges;
 };
@@ -79,13 +79,13 @@ struct Hash
 {
 	size_t operator()(const PathEntry& path) const
 	{
-		return std::hash<string>{}(path.From->GetTarget()->Name) + std::hash<string>{}(path.From->GetSource()->Name) + std::hash<bool>{}(path.Forward);
+		return path.From->GetTarget()->Idx + path.From->GetSource()->Idx + (path.Forward ? 17 : 0);
 	}
 };
 
 bool operator==(const PathEntry& a, const PathEntry& b)
 {
-	return a.PathEdge->Source->Name == b.PathEdge->Source->Name && a.PathEdge->Target->Name == b.PathEdge->Target->Name && a.Forward == b.Forward;
+	return a.PathEdge->Source->Idx == b.PathEdge->Source->Idx && a.PathEdge->Target->Idx == b.PathEdge->Target->Idx && a.Forward == b.Forward;
 }
 
 struct Path
@@ -243,21 +243,21 @@ void CreateEdges()
 void CreateVertices()
 {
 	// Push s to vector
-	Vertices.push_back(make_shared<Vertex>("s"));
+	Vertices.push_back(make_shared<Vertex>(0));
 
 	int i = 0;
 	// All columns
 	for(i = 0; i < m; i++)
 	{
-		Vertices.push_back(make_shared<Vertex>("Column " + to_string(i)));
+		Vertices.push_back(make_shared<Vertex>(i));
 		CreateNewEdge(0, i + 1, 1);
 	}
 
 	// All rows
-	shared_ptr<Vertex> t = make_shared<Vertex>("t");
+	shared_ptr<Vertex> t = make_shared<Vertex>(m + n + 1);
 	for(i = 0; i < n; i++)
 	{
-		Vertices.push_back(make_shared<Vertex>("Row " + to_string(i)));
+		Vertices.push_back(make_shared<Vertex>(m + i));
 		CreateNewEdge(Vertices[m + i + 1], t, 2);
 	}
 
