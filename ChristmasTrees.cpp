@@ -75,6 +75,14 @@ struct PathEntry
 	}
 };
 
+struct Hash
+{
+	size_t operator()(const PathEntry& path) const
+	{
+		return std::hash<string>{}(path.From->GetTarget()->Name) + std::hash<string>{}(path.From->GetSource()->Name) + std::hash<bool>{}(path.Forward);
+	}
+};
+
 bool operator==(const PathEntry& a, const PathEntry& b)
 {
 	return a.PathEdge->Source->Name == b.PathEdge->Source->Name && a.PathEdge->Target->Name == b.PathEdge->Target->Name && a.Forward == b.Forward;
@@ -153,7 +161,7 @@ int main()
 bool FindPath(shared_ptr<PathEntry>& finalPathEntry)
 {
 	queue<shared_ptr<PathEntry>> openPaths;
-	vector<PathEntry> closed;
+	unordered_set<PathEntry, Hash> closed;
 	for(shared_ptr<Edge>& edge : Vertices[0]->OutgoingEdges)
 	{
 		if(edge->CanTraverse(true))
@@ -174,10 +182,10 @@ bool FindPath(shared_ptr<PathEntry>& finalPathEntry)
 		for(shared_ptr<Edge>& edge : currPath->GetTarget()->OutgoingEdges)
 		{
 			PathEntry path(true, currPath, edge);
-			if(std::find(closed.begin(), closed.end(), path) != closed.end())
+			if(closed.find(path) != closed.end())
 				continue;
 
-			closed.push_back(path);
+			closed.emplace(path);
 
 			if(edge->Target == Vertices[Vertices.size() - 1] && edge->CanTraverse(true))
 			{
@@ -193,10 +201,10 @@ bool FindPath(shared_ptr<PathEntry>& finalPathEntry)
 		for(shared_ptr<Edge>& edge : currPath->GetTarget()->IngoingEdges)
 		{
 			PathEntry path(false, currPath, edge);
-			if(std::find(closed.begin(), closed.end(), path) != closed.end())
+			if(closed.find(path) != closed.end())
 				continue;
 
-			closed.push_back(path);
+			closed.emplace(path);
 
 			if(edge->CanTraverse(false) && edge != currPath->PathEdge)
 			{
